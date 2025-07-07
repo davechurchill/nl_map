@@ -51,7 +51,7 @@
     </ClInclude>
     <ClInclude Include="..\src\GUI.hpp" />
     <ClInclude Include="..\src\ViewController.hpp" />
-    <ClInclude Include="..\src\WayData.hpp" />
+    <ClInclude Include="..\src\MapData.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">

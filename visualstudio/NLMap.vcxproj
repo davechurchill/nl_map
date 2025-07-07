@@ -39,7 +39,7 @@
     <ClInclude Include="..\src\imgui\imstb_textedit.h" />
     <ClInclude Include="..\src\imgui\imstb_truetype.h" />
     <ClInclude Include="..\src\ViewController.hpp" />
-    <ClInclude Include="..\src\WayData.hpp" />
+    <ClInclude Include="..\src\MapData.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{08A10BC2-2DCF-4F95-A0B2-BA931971AEEA}</ProjectGuid>
@@ -183,7 +183,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>../src;../src/imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <DisableSpecificWarnings>4275;4834</DisableSpecificWarnings>
     </ClCompile>
     <Link>

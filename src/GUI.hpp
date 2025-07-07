@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ViewController.hpp"
-#include "WayData.hpp"
+#include "MapData.hpp"
 
 #include <vector>
 #include <map>
@@ -17,9 +17,13 @@ class GUI
     sf::Clock           m_deltaClock;
     ImGuiStyle          m_originalStyle;
     ViewController      m_viewController;
-    WayDataSet          m_ways;
+    MapData             m_mapData;
+
+    bool                m_drawWays = true;
+    bool                m_drawNodes = false;
 
     sf::VertexArray     m_wayLines{ sf::PrimitiveType::LineStrip };
+    sf::VertexArray     m_nodeLines{ sf::PrimitiveType::Lines };
 
     struct TypeColor 
     {
@@ -47,8 +51,9 @@ public:
         if (!ImGui::SFML::Init(m_window)) { exit(-1); }
         m_originalStyle = ImGui::GetStyle();
 
-        m_ways.loadFromFile("ways.txt");
+        m_mapData.loadFromFile("ways.txt");
         loadWayLines();
+        loadWayLinesByNode();
         setInitialView();
     }
 
@@ -60,14 +65,14 @@ public:
         float maxX = std::numeric_limits<float>::lowest();
         float maxY = std::numeric_limits<float>::lowest();
 
-        for (const auto& way : m_ways.getWays()) 
+        for (const auto& way : m_mapData.getWays()) 
         {
-            for (const auto& p : way.nodes) 
+            for (const auto& n : way.nodes) 
             {
-                if (p.x < minX) { minX = p.x; }
-                if (p.y < minY) { minY = p.y; }
-                if (p.x > maxX) maxX = p.x;
-                if (p.y > maxY) maxY = p.y;
+                if (n.p.x < minX) { minX = n.p.x; }
+                if (n.p.y < minY) { minY = n.p.y; }
+                if (n.p.x > maxX) maxX = n.p.x;
+                if (n.p.y > maxY) maxY = n.p.y;
             }
         }
 
@@ -140,31 +145,47 @@ public:
     // the entire buffer will be drawn every frame by the gpu very quickly
     void loadWayLines()
     {
-        const std::vector<WayData>& ways = m_ways.getWays();
+        const std::vector<Way>& ways = m_mapData.getWays();
 
         for (size_t i=0; i<ways.size(); i++)
         {
             // in order to avoid connecting lines from the end of one way to the beginning of the next
             // we need to insert an invisible line in its place
             // this is the beginninf of that invisible line
-            if (i > 0) { m_wayLines.append(sf::Vertex{ways[i].nodes[0], sf::Color(0, 0, 0, 0)}); }
+            if (i > 0) { m_wayLines.append(sf::Vertex{ways[i].nodes[0].p, sf::Color(0, 0, 0, 0)}); }
 
             // now draw the actual line we want
             for (int c = 0; c < ways[i].count; c++)
             {
                 sf::Color color = getColor(ways[i].highway);
 
-                m_wayLines.append(sf::Vertex{ ways[i].nodes[c], color});
+                m_wayLines.append(sf::Vertex{ ways[i].nodes[c].p, color});
             }
 
             // then draw the end of the invisible line
-            m_wayLines.append(sf::Vertex{ways[i].nodes[(ways[i].count-1)], sf::Color(0, 0, 0, 0) });
+            m_wayLines.append(sf::Vertex{ways[i].nodes[(ways[i].count-1)].p, sf::Color(0, 0, 0, 0) });
+        }
+    }
+
+    void loadWayLinesByNode()
+    {
+        const std::vector<Node>& nodes = m_mapData.getNodes();
+
+        for (size_t i = 0; i < nodes.size(); i++)
+        {
+            for (auto id : nodes[i].connectedNodeIDs)
+            {
+                auto& node = m_mapData.getNodeData().getNodeByID(id);
+                m_nodeLines.append(sf::Vertex{ nodes[i].p, sf::Color(255, 255, 255, 255) });
+                m_nodeLines.append(sf::Vertex{ node.p, sf::Color(255, 255, 255, 255) });
+            }
         }
     }
 
     void render()
     {
-        m_window.draw(m_wayLines);
+        if (m_drawWays) { m_window.draw(m_wayLines); }
+        if (m_drawNodes) { m_window.draw(m_nodeLines); }
     }
 
     void imgui()
@@ -175,11 +196,14 @@ public:
         {
             if (ImGui::BeginTabItem("Way Info"))
             {
-                ImGui::Text("Ways: %d", int(m_ways.getWays().size()));
+                ImGui::Text("Ways: %d", int(m_mapData.getWays().size()));
+                ImGui::Text("Nodes: %d", int(m_mapData.getNodes().size()));
                 if (ImGui::Button("Reset View"))
                 {
                     setInitialView();
                 }
+                ImGui::Checkbox("Draw Ways", &m_drawWays);
+                ImGui::Checkbox("Draw Nodes", &m_drawNodes);
                 ImGui::EndTabItem();
             }
 
