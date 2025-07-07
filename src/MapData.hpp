@@ -17,6 +17,7 @@ struct Node
     uint64_t index = 0;
     std::vector<uint64_t> wayIDs;
     std::vector<uint64_t> connectedNodeIDs;
+    std::vector<uint64_t> connectedNodeIndexes;
 
     Node() = default;
 
@@ -106,10 +107,22 @@ public:
 
     void createVectorizedData()
     {
+        std::cout << "Processing Node Data...";
+
+        // create the vector with all the node data
         for (auto& [nodeID, node] : m_nodeMap)
         {
             node.index = m_nodes.size();
             m_nodes.push_back(node);
+        }
+
+        // loop over it one final time to get the node indexes
+        for (auto& node : m_nodes)
+        {
+            for (size_t i = 0; i < node.connectedNodeIDs.size(); i++)
+            {
+                node.connectedNodeIndexes.push_back(getNodeByID(node.connectedNodeIDs[i]).index);
+            }
         }
     }
 
@@ -190,6 +203,7 @@ public:
         // skip header
         if (!std::getline(file, line)) { return; }
 
+        std::cout << "Loading Way Data from file...";
         while (std::getline(file, line)) 
         {
             Way way;
@@ -200,7 +214,7 @@ public:
         }
 
         m_wayData.createVectorizedData();
-        std::cout << "Loaded " << m_wayData.getWays().size() << " ways\n";
+        std::cout << " " << m_wayData.getWays().size() << " ways\n";
         
         for (auto& way : m_wayData.getWays())
         {
@@ -217,7 +231,7 @@ public:
         }
 
         m_nodeData.createVectorizedData();
-        std::cout << "Unique Nodes: " << m_nodeData.getNodes().size() << "\n";
+        std::cout << " " << m_nodeData.getNodes().size() << " unique nodes\n";
     }
 
     std::vector<Way>& getWays()

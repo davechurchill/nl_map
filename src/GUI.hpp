@@ -145,6 +145,7 @@ public:
     // the entire buffer will be drawn every frame by the gpu very quickly
     void loadWayLines()
     {
+        std::cout << "Loading Way Lines into Vertex Array...\n";
         const std::vector<Way>& ways = m_mapData.getWays();
 
         for (size_t i=0; i<ways.size(); i++)
@@ -169,6 +170,7 @@ public:
 
     void loadWayLinesByNode()
     {
+        std::cout << "Loading Node Lines into Vertex Array...\n";
         const std::vector<Node>& nodes = m_mapData.getNodes();
 
         for (size_t i = 0; i < nodes.size(); i++)
