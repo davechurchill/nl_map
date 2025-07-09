@@ -141,8 +141,6 @@ public:
                             minIndex = int(node.index);
                         }
                     }
-                    std::cout << "Min Dist = " << minDist << "\n";
-                    std::cout << "Min Node = " << minIndex << "\n";
                     m_selectedNode = minIndex;
                 }
             }
