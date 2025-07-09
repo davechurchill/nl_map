@@ -21,6 +21,10 @@ class GUI
 
     bool                m_drawWays = true;
     bool                m_drawNodes = false;
+    int                 m_selectedNode = -1;
+
+    int                 m_startNode = -1;
+    int                 m_goalNode = -1;
 
     sf::VertexArray     m_wayLines{ sf::PrimitiveType::LineStrip };
     sf::VertexArray     m_nodeLines{ sf::PrimitiveType::Lines };
@@ -119,6 +123,29 @@ public:
             {
                 std::exit(0);
             }
+
+            if (ImGui::GetIO().WantCaptureMouse) { continue; }
+            if (const auto* mbp = event->getIf<sf::Event::MouseButtonPressed>())
+            {
+                sf::Vector2f m(m_window.mapPixelToCoords(mbp->position));
+                if (mbp->button == sf::Mouse::Button::Left)
+                {
+                    float minDist = 10000000;
+                    int minIndex = -1;
+                    for (Node& node : m_mapData.getNodes())
+                    {
+                        float dist = (node.p - m).length();
+                        if (dist < minDist)
+                        {
+                            minDist = dist;
+                            minIndex = int(node.index);
+                        }
+                    }
+                    std::cout << "Min Dist = " << minDist << "\n";
+                    std::cout << "Min Node = " << minIndex << "\n";
+                    m_selectedNode = minIndex;
+                }
+            }
         }
     }
 
@@ -188,6 +215,27 @@ public:
     {
         if (m_drawWays) { m_window.draw(m_wayLines); }
         if (m_drawNodes) { m_window.draw(m_nodeLines); }
+
+        if (m_selectedNode != -1)
+        {
+            float radius = 0.0002f;
+            radius = m_window.getView().getSize().x / 100;
+            
+            for (uint64_t ni : m_mapData.getNodes()[m_selectedNode].connectedNodeIndexes)
+            {
+                drawCircleAtNode(int(ni), sf::Color(0, 255, 0, 200), radius);
+            }
+            drawCircleAtNode(m_selectedNode, sf::Color(255, 0, 0, 200), radius);
+        }
+    }
+
+    void drawCircleAtNode(int nodeIndex, sf::Color c, float radius)
+    {
+        sf::CircleShape circle(radius, 32);
+        circle.setOrigin({ radius, radius });
+        circle.setFillColor(c);
+        circle.setPosition(m_mapData.getNodes()[nodeIndex].p);
+        m_window.draw(circle);
     }
 
     void imgui()
@@ -206,6 +254,18 @@ public:
                 }
                 ImGui::Checkbox("Draw Ways", &m_drawWays);
                 ImGui::Checkbox("Draw Nodes", &m_drawNodes);
+
+                ImGui::Text("Selected Node ID: %d", m_selectedNode);
+                ImGui::Text("   Start Node ID: %d", m_startNode);
+                ImGui::Text("    Goal Node ID: %d", m_goalNode);
+                if (ImGui::Button("Set Start")) { m_startNode = m_selectedNode; }
+                ImGui::SameLine();
+                if (ImGui::Button("Set Goal"))  { m_goalNode = m_selectedNode; }
+                if (ImGui::Button("Start Search"))
+                {
+                    doSearch(m_startNode, m_goalNode);
+                }
+
                 ImGui::EndTabItem();
             }
 
@@ -226,5 +286,15 @@ public:
         }
 
         ImGui::End();
+    }
+
+    void doSearch(int startNodeIndex, int goalNodeIndex)
+    {
+        if (startNodeIndex == -1 || goalNodeIndex == -1) { return; }
+
+        Node& startNode = m_mapData.getNodes()[startNodeIndex];
+        Node& goalNode  = m_mapData.getNodes()[goalNodeIndex];
+
+        // do rest of search here
     }
 };
