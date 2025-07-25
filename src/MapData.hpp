@@ -18,6 +18,7 @@ struct Node
     std::vector<uint64_t> wayIDs;
     std::vector<uint64_t> connectedNodeIDs;
     std::vector<uint64_t> connectedNodeIndexes;
+    bool isPedestrian = false; 
 
     Node() = default;
 
@@ -94,6 +95,11 @@ struct Way
 
         return true;
     }
+
+    bool isPedestrian() const 
+    {
+        return highway == "footway" || highway == "pedestrian"; 
+    }
 };
 
 class NodeData
@@ -143,6 +149,11 @@ public:
             {
                 it->second.connectedNodeIDs.push_back(id);
             }
+
+            if (node.isPedestrian)
+            {
+                it->second.isPedestrian = true; 
+            }
         }
     }
 
@@ -183,6 +194,14 @@ public:
         {
             way.index = m_ways.size();
             m_ways.push_back(way);
+
+            if (way.isPedestrian())
+            {
+                for(auto& node : way.nodes)
+                {
+                    node.isPedestrian = true; 
+                }
+            }
         }
     }
 };
@@ -221,6 +240,7 @@ public:
             for (size_t i = 0; i < way.nodes.size(); i++)
             {
                 Node& n = way.nodes[i];
+                n.isPedestrian = way.isPedestrian(); 
 
                 // compute the connected nodes from this node
                 if (i > 0) { n.connectedNodeIDs.push_back(way.nodes[i - 1].id); }
